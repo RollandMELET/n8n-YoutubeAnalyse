@@ -670,7 +670,7 @@ const metrics = {
 ### **Répertoires de Travail**
 
 ```bash
-/Users/rollandmelet/Développement/RoRworld/YouTube-Transcriber/
+/Users/rollandmelet/Développement/Projets/n8n-YoutubeAnalyse/
 ├── workflows/           # Exports n8n
 ├── templates/          # Templates Obsidian  
 ├── docs/              # Documentation

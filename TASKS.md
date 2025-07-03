@@ -27,7 +27,7 @@
 
 ### Répertoires de Travail
 
-# /Users/rollandmelet/Développement/RoRworld/YouTube-Transcriber/
+# /Users/rollandmelet/Développement/Projets/n8n-YoutubeAnalyse/
 ├── credentials/        # 🔒 Fichiers credentials (PRIVÉ, .gitignored)
 ├── workflows/          # 📄 Exports n8n JSON
 ├── templates/          # 📝 Templates Obsidian (si besoin)
@@ -74,8 +74,8 @@ P.2 Setup Environnement de Travail ⏱️ 15 min
 P.2.1 Créer la Structure des Répertoires
 P.2.1.a Créer les répertoires du projet.
 Generated bash
-mkdir -p "/Users/rollandmelet/Développement/RoRworld/YouTube-Transcriber"
-cd "/Users/rollandmelet/Développement/RoRworld/YouTube-Transcriber"
+mkdir -p "/Users/rollandmelet/Développement/Projets/n8n-YoutubeAnalyse"
+cd "/Users/rollandmelet/Développement/Projets/n8n-YoutubeAnalyse"
 mkdir -p credentials workflows templates tests docs scripts
 Use code with caution.
 Bash
