@@ -1,0 +1,545 @@
+{
+  "name": "YouTube Transcriber v1.0",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## @n8rRollandyt_bot",
+        "height": 420,
+        "width": 300
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -80,
+        -200
+      ],
+      "typeVersion": 1,
+      "id": "731543bb-ef35-4003-83a1-c93d360ae888",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2faca92b-08cc-417f-bc7c-cc879fd2ee1f",
+      "name": "Telegram Trigger @n8rRollandyt_bot",
+      "webhookId": "c5ef9d9c-39a1-4a4a-b98b-32b3b4fd4d24",
+      "credentials": {
+        "telegramApi": {
+          "id": "uJsmrOUidIWQ9lPt",
+          "name": "Telegram n8rRollandyt_bot"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// <!-- START OF FILE: n8n_extract_video_id.js -->\n// FILENAME: n8n_extract_video_id.js\n// Version: 1.1.0 - Improved Regex\n// Date: 2025-06-22\n// Author: Rolland MELET & AI Senior Coder\n// Description: Extracts a YouTube video ID from various URL formats.\nconst messageText = $input.first().json.message.text;\n\nfunction extractVideoId(url) {\n  // Cette regex est conçue pour capturer l'ID de 11 caractères des formats les plus courants,\n  // y compris les URLs standards, courtes (youtu.be), shorts, et embed.\n  const regex = /(?:youtube\\.com\\/(?:[^\\/\\n\\s]+\\/\\S+\\/|(?:v|e(?:mbed)?)\\/|\\S*?[?&]v=)|youtu\\.be\\/|youtube\\.com\\/shorts\\/)([a-zA-Z0-9_-]{11})/;\n  const match = url.match(regex);\n  return match ? match[1] : null;\n}\n\nconst videoId = extractVideoId(messageText);\n\nif (!videoId) {\n  // Ceci arrêtera le workflow si aucune URL valide n'est trouvée.\n  // L'erreur sera gérée par le Error Trigger que nous configurerons plus tard.\n  throw new Error(\"URL YouTube invalide ou ID non trouvé.\");\n}\n\n// Nous retournons l'ID, l'URL originale, et le chat_id pour un usage ultérieur (notifications).\nreturn {\n  video_id: videoId,\n  youtube_url: messageText,\n  chat_id: $input.first().json.message.chat.id\n};\n// <!-- END OF FILE: n8n_extract_video_id.js -->"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        360,
+        0
+      ],
+      "id": "0394c6e3-1f02-431d-b107-2e7c2791ccb8",
+      "name": "Extract Video ID"
+    },
+    {
+      "parameters": {
+        "url": "https://www.googleapis.com/youtube/v3/videos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "youTubeOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ $json.video_id }}"
+            },
+            {
+              "name": "part",
+              "value": "=snippet,contentDetails,statistics"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        620,
+        0
+      ],
+      "id": "09b07e98-c9e8-4066-984d-7b9567da8352",
+      "name": "YouTube Metadata",
+      "credentials": {
+        "youTubeOAuth2Api": {
+          "id": "pMpLBls6Uuj7Eaxi",
+          "name": "YouTube account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Recup des meta data via l'API de You Tube",
+        "height": 420,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        560,
+        -220
+      ],
+      "typeVersion": 1,
+      "id": "189b7b75-82c9-4dd4-8c60-556b49ce1e28",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "url": "https://youtube-transcriptor.p.rapidapi.com/transcript",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "video_id",
+              "value": "={{ $('Extract Video ID').first().json.video_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-rapidapi-host",
+              "value": "youtube-transcriptor.p.rapidapi.com"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        940,
+        0
+      ],
+      "id": "c4842815-75fe-4c80-b1b3-df28a6bd0f29",
+      "name": "RapidAPI Transcript.",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "DFr8kWF7Hn5fJSqd",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Recup le transcript",
+        "height": 420
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        860,
+        -220
+      ],
+      "typeVersion": 1,
+      "id": "53e0262d-ce78-42d9-982a-ea52cdc89537",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// <!-- START OF FILE: n8n_format_note.js -->\n// FILENAME: n8n_format_note.js\n// Version: 1.1.0 - Adapted for current workflow structure\n// Date: 2025-06-22\n// Author: Rolland MELET & AI Senior Coder\n// Description: Formats the final Obsidian note in Markdown.\n\n// Récupérer les données des nœuds précédents\nconst videoData = $('Extract Video ID').item.json;\nconst metadataNode = $('YouTube Metadata').item.json.items[0];\nconst analysis = $('MonAnalyseIA').item.json.message.content;\n\n// Fonction pour convertir la durée YouTube (PT8M52S) en un format lisible (8:52)\nfunction formatDuration(duration) {\n  const match = duration.match(/PT(?:(\\d+)H)?(?:(\\d+)M)?(?:(\\d+)S)?/);\n  if (!match) return \"N/A\";\n  const hours = parseInt(match[1] || 0);\n  const minutes = parseInt(match[2] || 0);\n  const seconds = parseInt(match[3] || 0);\n  if (hours > 0) return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;\n  return `${minutes}:${seconds.toString().padStart(2, '0')}`;\n}\n\n// Construire le contenu de la note en utilisant le template\nconst noteContent = `# ${metadataNode.snippet.title}\n\n## 📋 Métadonnées\n* **URL**: ${videoData.youtube_url}\n* **Chaîne**: [${metadataNode.snippet.channelTitle}](https://www.youtube.com/channel/${metadataNode.snippet.channelId})\n* **Durée**: ${formatDuration(metadataNode.contentDetails.duration)}\n* **Date publication**: ${metadataNode.snippet.publishedAt.split('T')[0]}\n* **Vues**: ${parseInt(metadataNode.statistics.viewCount).toLocaleString('fr-FR')}\n* **Date d'analyse**: ${new Date().toISOString().split('T')[0]}\n\n## 🎯 Synthèse IA (30 sec)\n${analysis.resume_executif}\n\n## 🔑 Points Clés\n${analysis.points_cles.map(point => `- ${point}`).join('\\n')}\n\n## 💡 Concepts & Outils\n${analysis.concepts_outils.map(item => `- ${item}`).join('\\n')}\n\n## 🚀 Enseignements Actionnables\n${analysis.enseignements.map(action => `- ${action}`).join('\\n')}\n\n## 🏷️ Tags\n${analysis.tags_sugeres.map(tag => `#${tag.replace(/\\s+/g, '_')}`).join(' ')}\n\n## 📝 Notes Personnelles\n* \n\n*Généré automatiquement via RoR-Transcriber le ${new Date().toISOString()}*`;\n\n// Créer un nom de fichier propre et sécurisé\nconst cleanTitle = metadataNode.snippet.title.replace(/[\\\\/:\"*?<>|]/g, '').replace(/\\s+/g, '-').substring(0, 80);\nconst fileName = `${new Date().toISOString().split('T')[0]}_${cleanTitle}.md`;\n\n// Retourner le contenu de la note et le nom du fichier pour le nœud suivant\nreturn {\n  note_content: noteContent,\n  file_name: fileName\n};\n\n// <!-- END OF FILE: n8n_format_note.js -->"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1600,
+        0
+      ],
+      "id": "a0dd5ad2-8043-4605-b21a-d43c5cde8428",
+      "name": "Format Obsidian Note"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "chatgpt-4o-latest",
+          "mode": "list",
+          "cachedResultName": "CHATGPT-4O-LATEST"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Analyse de manière experte la vidéo suivante :\n\n### METADONNÉES ###\n- Titre: {{ $json.title }}\n- Chaîne: {{ $('YouTube Metadata').item.json.items[0].snippet.channelTitle }}\n- Description: {{ $('YouTube Metadata').item.json.items[0].snippet.description }}\n- Tags originaux: {{ $('YouTube Metadata').item.json.items[0].snippet.tags }}\n- Url de la video : {{ $('Extract Video ID').item.json.youtube_url }}\n### TRANSCRIPTION COMPLÈTE ###\n{{ $json.transcriptionAsText }}\n\nGénère l'analyse structurée au format JSON demandé."
+            },
+            {
+              "content": "Tu es un analyste expert et un stratège de contenu, spécialisé dans la distillation de vidéos YouTube en connaissances actionnables. Ta mission est d'analyser les métadonnées et la transcription fournies pour produire une synthèse structurée et de haute qualité au format JSON.\n\nRègles strictes :\n1.  Ta réponse DOIT être un objet JSON valide, et rien d'autre. Pas de texte avant, pas de texte après, pas de ```json.\n2.  Respecte scrupuleusement la structure et les types de données du JSON demandé.\n3.  Sois concis, clair et direct. Va à l'essentiel.\n4.  Les tags doivent être en minuscules, sans espaces (utilise des underscores si besoin), et pertinents pour une base de connaissances comme Obsidian.\n\nLe format de sortie JSON attendu est :\n{\n  \"resume_executif\": \"Un résumé percutant de 2-3 phrases (max 100 mots) qui capture l'idée centrale de la vidéo.\",\n  \"points_cles\": [\n    \"Un point clé majeur.\",\n    \"Un deuxième point clé essentiel.\",\n    \"Un troisième point clé important.\"\n  ],\n  \"concepts_outils\": [\n    \"Concept ou outil 1 mentionné dans la vidéo.\",\n    \"Concept ou outil 2.\"\n  ],\n  \"tags_sugeres\": [\n    \"tag_principal\",\n    \"deuxieme_tag\",\n    \"technologie_mentionnee\"\n  ],\n  \"enseignements\": [\n    \"Leçon ou stratégie directement applicable.\",\n    \"Autre enseignement actionnable.\"\n  ]\n}",
+              "role": "system"
+            }
+          ]
+        },
+        "jsonOutput": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        1240,
+        0
+      ],
+      "id": "5fb53294-641e-44ad-bdb3-bde90247fd6a",
+      "name": "MonAnalyseIA",
+      "credentials": {
+        "openAiApi": {
+          "id": "Ip617sZJQuqUAaxF",
+          "name": "n8n-youtube-Transcrib-Agent"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "note_content",
+        "options": {
+          "fileName": "={{ $json.file_name }}"
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        2000,
+        0
+      ],
+      "id": "5b98f10b-8ee3-459e-b282-2b89ac738f11",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1ymAAUm3z3-8edSErbtwKQpRhLsJ5v6kj",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2220,
+        0
+      ],
+      "id": "c0fdca24-d4ad-4190-be96-d89a40e713e1",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "wrd7U58lo63jRmBQ",
+          "name": "Google Drive account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Telegram Trigger @n8rRollandyt_bot": [
+      {
+        "json": {
+          "update_id": 686045338,
+          "message": {
+            "message_id": 4,
+            "from": {
+              "id": 938096800,
+              "is_bot": false,
+              "first_name": "Rolland",
+              "last_name": "MELET",
+              "username": "RollandMELET",
+              "language_code": "fr"
+            },
+            "chat": {
+              "id": 938096800,
+              "first_name": "Rolland",
+              "last_name": "MELET",
+              "username": "RollandMELET",
+              "type": "private"
+            },
+            "date": 1751536121,
+            "text": "https://youtu.be/IA1rP4kXV8I?si=MKMiNawy2TEMLJ8L",
+            "entities": [
+              {
+                "offset": 0,
+                "length": 48,
+                "type": "url"
+              }
+            ],
+            "link_preview_options": {
+              "url": "https://youtu.be/IA1rP4kXV8I?si=MKMiNawy2TEMLJ8L"
+            }
+          }
+        }
+      }
+    ],
+    "Extract Video ID": [
+      {
+        "json": {
+          "video_id": "IA1rP4kXV8I",
+          "youtube_url": "https://youtu.be/IA1rP4kXV8I?si=MKMiNawy2TEMLJ8L",
+          "chat_id": 938096800
+        }
+      }
+    ],
+    "YouTube Metadata": [
+      {
+        "json": {
+          "kind": "youtube#videoListResponse",
+          "etag": "MEb-yNr-uxHeQ69Hmxm-MhlS-bM",
+          "items": [
+            {
+              "kind": "youtube#video",
+              "etag": "7qmQKImKzC2hhUK18YAMjfl4_8w",
+              "id": "IA1rP4kXV8I",
+              "snippet": {
+                "publishedAt": "2025-07-03T09:15:04Z",
+                "channelId": "UC0m81bQuthaQZmFbXEY9QSw",
+                "title": "Crystal IVE: This OPENSOURCE Claude Code GUI/IDE is INSANE!",
+                "description": "Try Brilliant free for 30 days https://brilliant.org/AICodeKing/ You’ll also get 20% off an annual premium subscription.\n\nIn this video, I'll be showing you Crystal, a new GUI wrapper for Claude Code that turns it into a next-gen IDE. It is siamilar to Claudia. Crystal allows you to run multiple Claude Code instances simultaneously using git worktrees, making it perfect for working on multiple issues in the same project at once.\n\n--\nKey Takeaways:\n\n🖥️ Crystal is an Electron desktop app that provides a graphical interface for Claude Code with advanced features.  \n🌳 Uses git worktrees to create isolated environments for each coding session, allowing simultaneous work on multiple issues.  \n🔄 Automatically handles worktree creation, commits, and rebasing back to your main branch.  \n💻 Works seamlessly with Claude Pro and Max subscriptions, just like regular Claude Code.  \n📊 Built-in diff viewer lets you review exact changes made in each session before merging.  \n🛠️ Includes integrated terminal, file editor, and the ability to open projects directly in your preferred IDE.  \n⚡ Can run your code automatically without needing to manually execute from each worktree.  \n🎯 Perfect for developers who want a visual interface to manage multiple Claude Code sessions efficiently.\n\n--\nTimestamps:\n\n00:00 - Introduction to Crystal\n02:01 - Installation & Setup Process\n02:42 - Setup, Usage & Thoughts about Crystal\n07:35 - Brilliant (Sponsor)\n08:35 - Ending",
+                "thumbnails": {
+                  "default": {
+                    "url": "https://i.ytimg.com/vi/IA1rP4kXV8I/default.jpg",
+                    "width": 120,
+                    "height": 90
+                  },
+                  "medium": {
+                    "url": "https://i.ytimg.com/vi/IA1rP4kXV8I/mqdefault.jpg",
+                    "width": 320,
+                    "height": 180
+                  },
+                  "high": {
+                    "url": "https://i.ytimg.com/vi/IA1rP4kXV8I/hqdefault.jpg",
+                    "width": 480,
+                    "height": 360
+                  },
+                  "standard": {
+                    "url": "https://i.ytimg.com/vi/IA1rP4kXV8I/sddefault.jpg",
+                    "width": 640,
+                    "height": 480
+                  },
+                  "maxres": {
+                    "url": "https://i.ytimg.com/vi/IA1rP4kXV8I/maxresdefault.jpg",
+                    "width": 1280,
+                    "height": 720
+                  }
+                },
+                "channelTitle": "AICodeKing",
+                "tags": [
+                  "crystal gui",
+                  "claude code gui",
+                  "git worktrees",
+                  "ai coding assistant",
+                  "claude code wrapper",
+                  "integrated vibe coding environment",
+                  "electron app",
+                  "multiple coding sessions",
+                  "claude pro",
+                  "claude max",
+                  "ide for ai",
+                  "git workflow",
+                  "diff viewer",
+                  "coding",
+                  "developer tools"
+                ],
+                "categoryId": "28",
+                "liveBroadcastContent": "none",
+                "localized": {
+                  "title": "Crystal IVE: This OPENSOURCE Claude Code GUI/IDE is INSANE!",
+                  "description": "Try Brilliant free for 30 days https://brilliant.org/AICodeKing/ You’ll also get 20% off an annual premium subscription.\n\nIn this video, I'll be showing you Crystal, a new GUI wrapper for Claude Code that turns it into a next-gen IDE. It is siamilar to Claudia. Crystal allows you to run multiple Claude Code instances simultaneously using git worktrees, making it perfect for working on multiple issues in the same project at once.\n\n--\nKey Takeaways:\n\n🖥️ Crystal is an Electron desktop app that provides a graphical interface for Claude Code with advanced features.  \n🌳 Uses git worktrees to create isolated environments for each coding session, allowing simultaneous work on multiple issues.  \n🔄 Automatically handles worktree creation, commits, and rebasing back to your main branch.  \n💻 Works seamlessly with Claude Pro and Max subscriptions, just like regular Claude Code.  \n📊 Built-in diff viewer lets you review exact changes made in each session before merging.  \n🛠️ Includes integrated terminal, file editor, and the ability to open projects directly in your preferred IDE.  \n⚡ Can run your code automatically without needing to manually execute from each worktree.  \n🎯 Perfect for developers who want a visual interface to manage multiple Claude Code sessions efficiently.\n\n--\nTimestamps:\n\n00:00 - Introduction to Crystal\n02:01 - Installation & Setup Process\n02:42 - Setup, Usage & Thoughts about Crystal\n07:35 - Brilliant (Sponsor)\n08:35 - Ending"
+                },
+                "defaultAudioLanguage": "en"
+              },
+              "contentDetails": {
+                "duration": "PT8M52S",
+                "dimension": "2d",
+                "definition": "hd",
+                "caption": "false",
+                "licensedContent": true,
+                "contentRating": {},
+                "projection": "rectangular"
+              },
+              "statistics": {
+                "viewCount": "536",
+                "likeCount": "25",
+                "favoriteCount": "0",
+                "commentCount": "6"
+              }
+            }
+          ],
+          "pageInfo": {
+            "totalResults": 1,
+            "resultsPerPage": 1
+          }
+        }
+      }
+    ],
+    "MonAnalyseIA": [
+      {
+        "json": {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": {
+              "resume_executif": "Crystal est une application desktop open-source basée sur Electron qui transforme Claude Code en un IDE visuel avancé. Grâce à l'utilisation intelligente des worktrees Git, elle permet de gérer plusieurs sessions de développement simultanément, offrant un flux de travail fluide, puissant et adapté aux utilisateurs de Claude Pro ou Max.",
+              "points_cles": [
+                "Crystal permet l'exécution simultanée de plusieurs sessions Claude Code grâce aux worktrees Git.",
+                "Elle propose une interface graphique intuitive, avec terminal intégré, éditeur de fichiers, et visualiseur de différences (diff viewer).",
+                "L'application facilite la création, le suivi et la fusion des branches via un flux Git automatisé centré sur les issues à traiter."
+              ],
+              "concepts_outils": [
+                "git worktrees",
+                "claude code"
+              ],
+              "tags_sugeres": [
+                "claude_code",
+                "ide_visuel",
+                "git_workflow"
+              ],
+              "enseignements": [
+                "Utiliser les git worktrees pour isoler et paralléliser efficacement les tâches de développement sur un même projet.",
+                "Tirer profit d'une interface graphique pour améliorer la productivité lorsqu'on travaille avec des assistants IA comme Claude."
+              ]
+            },
+            "refusal": null,
+            "annotations": []
+          },
+          "logprobs": null,
+          "finish_reason": "stop"
+        }
+      }
+    ],
+    "Format Obsidian Note": [
+      {
+        "json": {
+          "note_content": "# Crystal IVE: This OPENSOURCE Claude Code GUI/IDE is INSANE!\n\n## 📋 Métadonnées\n* **URL**: https://youtu.be/IA1rP4kXV8I?si=MKMiNawy2TEMLJ8L\n* **Chaîne**: [AICodeKing](https://www.youtube.com/channel/UC0m81bQuthaQZmFbXEY9QSw)\n* **Durée**: 8:52\n* **Date publication**: 2025-07-03\n* **Vues**: 536\n* **Date d'analyse**: 2025-07-03\n\n## 🎯 Synthèse IA (30 sec)\nCrystal est une application desktop open-source basée sur Electron qui transforme Claude Code en un IDE visuel avancé. Grâce à l'utilisation intelligente des worktrees Git, elle permet de gérer plusieurs sessions de développement simultanément, offrant un flux de travail fluide, puissant et adapté aux utilisateurs de Claude Pro ou Max.\n\n## 🔑 Points Clés\n- Crystal permet l'exécution simultanée de plusieurs sessions Claude Code grâce aux worktrees Git.\n- Elle propose une interface graphique intuitive, avec terminal intégré, éditeur de fichiers, et visualiseur de différences (diff viewer).\n- L'application facilite la création, le suivi et la fusion des branches via un flux Git automatisé centré sur les issues à traiter.\n\n## 💡 Concepts & Outils\n- git worktrees\n- claude code\n\n## 🚀 Enseignements Actionnables\n- Utiliser les git worktrees pour isoler et paralléliser efficacement les tâches de développement sur un même projet.\n- Tirer profit d'une interface graphique pour améliorer la productivité lorsqu'on travaille avec des assistants IA comme Claude.\n\n## 🏷️ Tags\n#claude_code #ide_visuel #git_workflow\n\n## 📝 Notes Personnelles\n* \n\n*Généré automatiquement via RoR-Transcriber le 2025-07-03T14:03:31.152Z*",
+          "file_name": "2025-07-03_Crystal-IVE-This-OPENSOURCE-Claude-Code-GUIIDE-is-INSANE!.md"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Telegram Trigger @n8rRollandyt_bot": {
+      "main": [
+        [
+          {
+            "node": "Extract Video ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Video ID": {
+      "main": [
+        [
+          {
+            "node": "YouTube Metadata",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Metadata": {
+      "main": [
+        [
+          {
+            "node": "RapidAPI Transcript.",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RapidAPI Transcript.": {
+      "main": [
+        [
+          {
+            "node": "MonAnalyseIA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MonAnalyseIA": {
+      "main": [
+        [
+          {
+            "node": "Format Obsidian Note",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Obsidian Note": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1595b8ee-2e69-4056-b3d1-80c6d37ae493",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "5ea01bbf888b4b219ca69c62915400915e08a090c998cef98e817bc634dd0d3e"
+  },
+  "id": "i3vb9pa9XKY0yfAU",
+  "tags": [
+    {
+      "name": "youtube",
+      "id": "NpXQaoZosdMdsj3H",
+      "createdAt": "2025-07-03T09:23:22.195Z",
+      "updatedAt": "2025-07-03T09:23:22.195Z"
+    }
+  ]
+}
