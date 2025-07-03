@@ -1,4 +1,17 @@
+# Dépendances Node.js
 node_modules/
-.env
+
+# Fichiers de variables d'environnement (ex: .env, dev.env)
+*.env
+
+# Dossier contenant les fichiers de credentials (sécurisé)
+credentials/
+
+# Fichier d'credentials OAuth généré par n8n (TRÈS IMPORTANT à ignorer)
 oauth_creds.json
+
+# Sauvegardes de workflows
 workflow_old.json
+
+# Fichiers système macOS
+.DS_Store
